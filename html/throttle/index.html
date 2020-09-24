@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <style>
+    html {
+      height: 100%;
+    }
+    body {
+      height: 1000px;
+    }
+  </style>
+  <script>
+    // 节流, 每隔一定时间触发一次
+    function throttle(fn, delay) {
+      let last = 0;
+      return function() {
+        let context = this;
+        let args = arguments;
+        let now = Date.now();
+        if (now - last >= delay) {
+          last = now;
+          fn.apply(context, args);
+        }
+      }
+    }
+    // 防抖 在一定时间内, 再次触发, 重新计时, 频繁触发的情况下 只会触发一次
+    function debounce(fn, delay) {
+      let timer = null;
+      return function() {
+        let context = this;
+        let args = arguments;
+        if (timer) {
+          clearTimeout(timer);
+        }
+        timer = setTimeout(() => {
+          fn.apply(context, args);
+        }, delay);
+      }
+    }
+    function test() {
+      console.log('test')
+    }
+    window.onscroll = debounce(test, 1000)
+  </script>
+</body>
+</html>

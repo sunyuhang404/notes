@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <style>
+    #box {
+      background-color: green;
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      align-items: stretch;
+    }
+    span {
+      flex: 1;
+      word-break: break-word;
+      display: inline-block;
+      background-color: red;
+    }
+    span:not(:last-child) {
+      margin-right: 10px;
+    }
+    /* #box {
+      height: 300px;
+      background-color: green;
+      position: relative;
+    }
+    span {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: red;
+    } */
+  </style>
+  <div id="box">
+    <span>1asdfasdasdfasdff1asdfasdasdfasdff1asdfasdasdfasdff1asdfasdasdfasdff1asdfasdasdfasdff1asdfasdasdfasdff1asdfasdasdfasdff1asdfasdasdfasdff1asdfasdasdfasdff1asdfasdasdfasdff1asdfasdasdfasdff1asdfasdasdfasdff1asdfasdasdfasdff1asdfasdasdfasdff1asdfasdasdfasdff</span>
+    <span>1asdfasdf</span>
+    <span>1asdfasdf</span>
+  </div>
+</body>
+</html>
