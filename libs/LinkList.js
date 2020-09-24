@@ -72,7 +72,7 @@ class LinkList {
         this.tail = node;
       } else {
         // 插入到中间
-        const current = this.getCurrentNode(position);
+        const current = this.getNodeWithIndex(position);
         node.next = current;
         node.prev = current.prev;
         current.prev.next = node;
@@ -87,7 +87,7 @@ class LinkList {
     if (position < 0 || position >= this.length) {
       return null;
     }
-    const current = this.getCurrentNode(position);
+    const current = this.getNodeWithIndex(position);
     return current.data
   }
 
@@ -108,7 +108,7 @@ class LinkList {
     if (position < 0 || position >= this.length) {
       return false;
     }
-    const current = this.getCurrentNode(position);
+    const current = this.getNodeWithIndex(position);
     current.data = data;
     return true;
   }
@@ -131,7 +131,7 @@ class LinkList {
         this.tail.prev.next = null;
         this.tail = this.tail.prev;
       } else {
-        current = this.getCurrentNode(position);
+        current = this.getNodeWithIndex(position);
         current.next.prev = current.prev;
         current.prev.next = current.next;
       }
@@ -193,7 +193,7 @@ class LinkList {
       return null;
     }
     let prev = null;
-    let current = this.getCurrentNode(start);
+    let current = this.getNodeWithIndex(start);
     while (current !== null) {
       let next = current.next;
       current.next = prev;
@@ -230,7 +230,7 @@ class LinkList {
     return resultString.split(',').filter(item => item !== '');
   }
 
-  getCurrentNode(position) {
+  getNodeWithIndex(position) {
     let current = null;
     if (Math.ceil(this.length / 2) > position) {
       current = this.head;
