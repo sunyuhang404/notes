@@ -11,7 +11,7 @@ class Node {
   }
 }
 
-class LinkList {
+module.exports = class LinkList {
   constructor(...params) {
     this.head = null;
     this.tail = null;
@@ -38,7 +38,7 @@ class LinkList {
     this.length = array.length;
   }
 
-  append(data) {
+  push(data) {
     const node = new Node(data);
     if (this.length === 0) {
       this.head = node;
@@ -83,7 +83,7 @@ class LinkList {
     return true;
   }
 
-  get(position) {
+  getNode(position) {
     if (position < 0 || position >= this.length) {
       return null;
     }
@@ -195,7 +195,7 @@ class LinkList {
     let prev = null;
     let current = this.getNodeWithIndex(start);
     while (current !== null) {
-      let next = current.next;
+      const next = current.next;
       current.next = prev;
       prev = current;
       current = next;
@@ -203,6 +203,47 @@ class LinkList {
     this.tail = this.head;
     this.head = prev;
     return prev;
+  }
+
+  hasCircle() {
+    let current = this.getNodeWithIndex(0);
+    while (current) {
+      if (current.flag && current.flag === 1) {
+        return true;
+      }
+      current = current.next;
+      current.flag = 1;
+    }
+    return false;
+  }
+
+  getCircleHead() {
+    // let a = this.head;
+    // let b = this.head;
+    // let i = 0;
+    // let j = 0;
+    // while (a !== b) {
+    //   a = a.next;
+    //   b = b.next.next;
+    //   i++;
+    //   j += 2;
+    // }
+    // console.log(i)
+    // console.log(j)
+
+    // 快慢指针方法
+    let slow = this.head
+    let fast = this.head
+    let i = 0;
+    while (fast && fast.next) {
+      slow = slow.next
+      fast = fast.next.next
+      if (slow === fast) {
+        return { node: slow, index: i };
+      }
+      i++;
+    }
+    return null
   }
 
   toString() {
@@ -248,27 +289,3 @@ class LinkList {
     return current;
   }
 }
-
-const list = new LinkList();
-list.append('aaa')
-list.append('bbb')
-list.append('ccc')
-list.append('ddd')
-list.append('eee')
-list.append('fff')
-// console.log(list.toString())
-// console.log(list.get(0))
-// console.log(list.indexOf('s'))
-// console.log(list.removeAt(3))
-// console.log(list.toString())
-
-// list.forEach((item, index, arr) => {
-//   console.log(item, index)
-// })
-
-// list.map((item, index, arr) => {
-//   return `${ item } - ${ index }`
-// });
-
-list.reverse(1);
-console.log(list.toString())

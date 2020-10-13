@@ -11,22 +11,7 @@
 //     }
 //   }
 // }
-
 // console.log(test(list, 9))
-
-// const getNum = n => {
-//   let a = 0, b = 1, c = 1;
-//   const list = [0, 1];
-//   for (let i = 1; i <= n; i++) {
-//     a = b;
-//     b = c;
-//     c = a + b;
-//     list.push(c);
-//   }
-//   return list;
-// }
-
-// console.log(getNum(5));
 
 // const test = arr => {
 //   const list = [];

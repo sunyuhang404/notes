@@ -10,7 +10,6 @@
     {{ name }}
   </div>
   <script>
-    
     class Dep {
       constructor() {
         this.subs = [];
@@ -48,6 +47,7 @@
         return value;
       }
     }
+
     function Observer(data) {
       if (!data || typeof data !== 'object') {
         return;
@@ -92,7 +92,6 @@
       });
     }
     Vue.prototype = {
-      // data 的代理
       proxyKeys: function(key) {
         Object.defineProperty(this, key, {
           enumerable: true,
