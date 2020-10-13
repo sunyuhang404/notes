@@ -51,6 +51,22 @@ module.exports = class LinkList {
     this.length += 1;
   }
 
+  pushWithList(list) {
+    const newList = new LinkList();
+    let head1 = this.head;
+    let head2 = list.head;
+    while (head1 && head2) {
+      if (head1.data <= head2.data) {
+        newList.push(head1.data);
+        head1 = head1.next;
+      } else {
+        newList.push(head2.data);
+        head2 = head2.next;
+      }
+    }
+    return newList;
+  }
+
   insert(position, data) {
     if (position < 0 || position >= this.length) return false
     const node = new Node(data);
@@ -111,6 +127,19 @@ module.exports = class LinkList {
     const current = this.getNodeWithIndex(position);
     current.data = data;
     return true;
+  }
+
+  unique() {
+    let current = this.head;
+    while (current && current.next) {
+      if (current.data === current.next.data) {
+        current.next = current.next.next;
+        this.length -= 1;
+      } else {
+        current = current.next;
+      }
+    }
+    return this;
   }
 
   removeAt(position) {
