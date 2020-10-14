@@ -12,21 +12,23 @@
   <script>
     class Dep {
       constructor() {
-        this.subs = [];
+        this.list = [];
       }
-      addWatcher(watcher) {
-        this.subs.push(watcher);
+
+      add(watcher) {
+        this.list.push(watcher);
       }
+
       notify() {
-        this.subs.forEach(watcher => watcher.update());
+        this.list.forEach(watcher => watcher.update());
       }
     }
-
+    window.target = null;
     class Watcher {
       constructor(vm, key, cb) {
         this.vm = vm;
-        this.cb = cb;
         this.key = key;
+        this.cb = cb;
         this.value = this.get();
       }
       update() {
@@ -40,6 +42,7 @@
           this.cb.call(this.vm, value, oldValue);
         }
       }
+
       get() {
         window.target = this;
         const value = this.vm.data[this.key];
@@ -48,59 +51,56 @@
       }
     }
 
-    function Observer(data) {
-      if (!data || typeof data !== 'object') {
-        return;
-      }
-      Object.keys(data).forEach(key => reactive(data, key, data[key]));
-    }
-
-    function reactive(data, key, value) {
-      Observer(value);
+    function reactive(data, key, val) {
+      Observer(val);
       const dep = new Dep();
       Object.defineProperty(data, key, {
-        configurable: true,
         enumerable: true,
+        configurable: true,
         get: function() {
           if (window.target) {
-            dep.addWatcher(window.target);
+            dep.add(window.target);
           }
-          return value;
+          return val;
         },
         set: function(newValue) {
-          if (value === newValue) {
-            return;
+          if (val !== newValue) {
+            val = newValue;
+            dep.notify();
           }
-          value = newValue;
-          dep.notify();
         }
-      });
+      })
     }
 
-    window.target = null;
+    function Observer(data) {
+      if (!data || typeof data !== 'object') return;
+      Object.keys(data).forEach(key => reactive(data, key, data[key]));
+    }
 
     function Vue(options) {
       this.data = options.data;
       Object.keys(this.data).forEach(key => {
-        this.proxyKeys(key);
+        this.proxy(key);
       })
       Observer(this.data);
       const element = document.querySelector(options.el);
       element.innerHTML = this.data.name;
+      options.mounted();
       new Watcher(this, 'name', value => {
+        options.beforeUpdate();
         element.innerHTML = value;
-      });
+        options.updated();
+      })
     }
+
     Vue.prototype = {
-      proxyKeys: function(key) {
+      proxy: function(key) {
         Object.defineProperty(this, key, {
-          enumerable: true,
-          configurable: true,
           get: function() {
-            return this.data[key]
+            return this.data[key];
           },
-          set: function(newValue) {
-            this.data[key] = newValue;
+          set: function(val) {
+            this.data[key] = val;
           }
         })
       }
@@ -110,6 +110,15 @@
       el: '#app',
       data: {
         name: 'test1'
+      },
+      mounted() {
+        console.log('mounted');
+      },
+      beforeUpdate() {
+        console.log('beforeUpdate')
+      },
+      updated() {
+        console.log('updated')
       }
     })
 
