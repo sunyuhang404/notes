@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <script>
+    class Test {
+      constructor(fn) {
+        this.status = 'pending';
+        this.value = undefined;
+        this.onFulfilledList = [];
+        this.onRejectedList = [];
+        fn(this.resolve.bind(this), this.reject.bind(this));
+      }
+
+      resolve(value) {
+        if (this.status !== 'pending') return;
+        this.status = 'fulfilled';
+        this.value = value;
+        setTimeout(() => {
+          // console.log(this.onFulfilledList)
+          for (let i = 0; i < this.onFulfilledList.length; i++) {
+            this.onFulfilledList[i](this.value);
+          }
+        });
+      }
+
+      reject(error) {
+        if (this.status !== 'pending') return;
+        this.status = 'rejected';
+        this.value = error;
+        setTimeout(() => {
+          for (let i = 0; i < this.onRejectedList.length; i++) {
+            this.onRejectedList[i](this.value);
+          }
+        });
+      }
+
+      handler(fn, resolve, reject) {
+        setTimeout(() => {
+          try {
+            const res = fn(this.value);
+            if (res instanceof Test) {
+              res.then(resolve, reject);
+            } else {
+              resolve(res);
+            }
+          } catch (error) {
+            reject(error);
+          }
+        });
+      }
+
+      then(onFulfilled, onRejected) {
+        onFulfilled = typeof onFulfilled === 'function' ? onFulfilled : v => v
+        onRejected = typeof onRejected === 'function' ? onRejected : e => e
+        if (this.status === 'fulfilled') {
+          return new Test((resolve, reject) => {
+            // setTimeout(() => {
+            //   try {
+            //     const res = onFulfilled(this.value);
+            //     if (res instanceof Test) {
+            //       res.then(resolve, reject);
+            //     } else {
+            //       resolve(res);
+            //     }
+            //   } catch (error) {
+            //     reject(error);
+            //   }
+            // });
+            this.handler(onFulfilled, resolve, reject);
+          });
+        }
+        if (this.status === 'rejected') {
+          return new Test((resolve, reject) => {
+            // setTimeout(() => {
+            //   try {
+            //     const res = onRejected(this.value);
+            //     if (res instanceof Test) {
+            //       res.then(resolve, reject);
+            //     } else {
+            //       resolve(res);
+            //     }
+            //   } catch (error) {
+            //     reject(error);
+            //   }
+            // });
+            this.handler(onRejected, resolve, reject);
+          });
+        }
+
+        if (this.status === 'pending') {
+          return new Test((resolve, reject) => {
+            this.onFulfilledList.push(value => {
+              // setTimeout(() => {
+              //   try {
+              //     const res = onFulfilled(this.value);
+              //     if (res instanceof Test) {
+              //       res.then(resolve, reject);
+              //     } else {
+              //       resolve(res);
+              //     }
+              //   } catch (error) {
+              //     reject(error);
+              //   }
+              // });
+              this.handler(onFulfilled, resolve, reject);
+            });
+            this.onRejectedList.push(value => {
+              // setTimeout(() => {
+              //   try {
+              //     const res = onRejected(this.value);
+              //     if (res instanceof Test) {
+              //       res.then(resolve, reject);
+              //     } else {
+              //       resolve(res);
+              //     }
+              //   } catch (error) {
+              //     reject(error);
+              //   }
+              // });
+              this.handler(onRejected, resolve, reject);
+            });
+          })
+        }
+      }
+      catch(onRejected) {
+        return this.then(null, onRejected);
+      }
+
+      finally(f) {
+        return this.then(value => {
+          return Test.resolve(f()).then(() => value);
+        }, error => {
+          return Test.resolve(f()).then(() => { throw error });
+        })
+      }
+    }
+
+    Test.resolve = value => {
+      if (value instanceof Test) return value;
+      return new Test((resolve, reject) => {
+        if (value && value.then && typeof value.then === 'function') {
+          setTimeout(() => {
+            value.then(resolve, reject);
+          });
+        } else {
+          resolve(value);
+        }
+      })
+    }
+
+    Test.All = list => {
+      return new Test((resolve, reject) => {
+        if (!Array.isArray(list)) {
+          reject(new TypeError('参数类型错误'));
+        }
+        let count = 0;
+        const resList = new Array(list.length);
+        for (let i = 0; i < list.length; i++) {
+          Test.resolve(list[i]).then(res => {
+            count ++;
+            resList[i] = res;
+            if (count === list.length) {
+              resolve(resList);
+            }
+          }, error => reject(error));
+        }
+      });
+    }
+
+    const aaa = Test.resolve(20)
+    aaa.then(val => {
+      console.log(val)
+    })
+    const promise1 = new Test(resolve => {
+      setTimeout(() => {
+        resolve(1111111);
+      }, 2000);
+    })
+    const promise2 = new Test(resolve => {
+      setTimeout(() => {
+        resolve(2222222);
+      }, 3000);
+    })
+    const arr = [promise1, promise2];
+    const start = Date.now();
+    Test.All(arr).then(res => {
+      const duration = (Date.now() - start) / 1000
+      console.log(Math.round(duration))
+      console.log(res)
+    })
+
+  </script>
+</body>
+</html>

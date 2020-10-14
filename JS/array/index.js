@@ -74,7 +74,7 @@ const func4 = arr => {
 // const res = func4([1, 2, 3]);
 
 
-// 5.返回 1到n 之间, k 个数的组合
+// 5.返回 1 到n 之间, k 个数的组合
 const func5 = (n, k) => {
   const res = [];
   const sub = [];

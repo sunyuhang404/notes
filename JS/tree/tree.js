@@ -63,6 +63,15 @@ const func5 = node => {
   node.right = right;
   return node;
 }
+// const res = func5(root)
 
-const res = func5(root)
+
+// 6.获取二叉树的高度
+const func6 = node => {
+  if (!node) return 0;
+  const leftH = func6(node.left);
+  const rightH = func6(node.right);
+  return Math.max(leftH, rightH) + 1;
+}
+const res = func6(root);
 console.log(res)
