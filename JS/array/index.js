@@ -184,6 +184,20 @@ const func9 = arr => {
   }
   return arr;
 }
-const res = func9([5, 3, 2, 4, 1]);
+// const res = func9([5, 3, 2, 4, 1]);
+
+// 10.根据权重随机选择
+const arr10 = [
+  { val: 1, weight: 1 },
+  { val: 2, weight: 4 },
+  { val: 3, weight: 6 },
+  { val: 5, weight: 10 },
+  { val: 67, weight: 13 },
+  { val: 100, weight: 29 },
+]
+const func10 = arr => {
+   
+}
+const res = func10(arr10);
 
 console.log(res);

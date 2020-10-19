@@ -13,110 +13,94 @@
     const REJECTED = 'REJECTED';
 
     class Test {
-      constructor(handle) {
-        if (!isFunction(handle)) {
-          throw new Error('参数类型错误');
-        }
-        // 设置初始值
-        this._status = PENDING;
-        this._value = undefined;
-        this._fulfilledList = [];
-        this._rejectedList = [];
-
-        // 执行 handle
-        try {
-          handle(this._resolve.bind(this), this._reject.bind(this));
-        } catch (error) {
-          this._reject(error);
-        }
+      constructor(fn) {
+        this.status = 'pending';
+        this.value = undefined;
+        this.onResolveList = [];
+        this.onRejectList = [];
+        fn(this.resolve.bind(this), this.reject.bind(this));
       }
 
-      // 返回一个新的 Promise
-      then(onFulfilled, onRejected) {
-        return new Test((onFulfilledNext, onRejectedNext) => {
-          // 成功的时候执行的函数
-          const fulfilled = value => {
-            try {
-              if (!isFunction(onFulfilled)) {
-                onFulfilledNext(value);
-              } else {
-                const res = onFulfilled(value);
-                if (res instanceof Test) {
-                  // 如果 res 是promise对象, 必须等状态改变了再执行下一个回调
-                  res.then(onFulfilledNext, onRejectedNext);
-                } else {
-                  // 把返回的结果作为参数, 传到下一个then的回调函数, 并立即执行下一个 then 的回调函数
-                  onFulfilledNext(res);
-                }
-              }
-            } catch (error) {
-              onRejectedNext(error);
-            }
-          }
-
-          const rejected = error => {
-            try {
-              if (!isFunction(onRejected)) {
-                onRejectedNext(error);
-              } else {
-                const res = onRejected(error);
-                if (res instanceof Test) {
-                  res.then(onFulfilledNext, onRejectedNext);
-                } else {
-                  onFulfilledNext(res);
-                }
-              }
-            } catch (error) {
-              onRejectedNext(error);
-            }
+      resolve(value) {
+        if (this.status !== 'pending') return;
+        this.status = 'fulfilled';
+        this.value = value;
+        setTimeout(() => {
+          for (let i = 0; i < this.onResolveList.length; i++) {
+            this.onResolveList[i](this.value);
           }
         });
-        const { _value, _status } = this;
-        switch(_status) {
-          // 如果状态是等待中, 把 then 方法的回调函数放到列表中等待执行
-          case PENDING:
-            this._fulfilledList.push(onFulfilled);
-            this._rejectedList.push(onRejected);
-            break;
-
-          // 状态改变, 立即执行对应的回调函数
-          case FULFILLED:
-            onFulfilled(_value);
-            break;
-
-          case REJECTED:
-            onRejected(_valaue);
-            break;
-        }
       }
 
-      _resolve(val) {
-        if (this._status !== PENDING) return
-        // 依次执行成功列表中的函数, 并清空列表
-        const run = () => {
-          this._status = FULFILLED;
-          this._value = val;
-          let cb;
-          while(cb = this._fulfilledList.shift()) {
-            cb(val);
+      reject(error) {
+        if (this.status !== 'pending') return;
+        this.status = 'rejected';
+        this.value = value;
+        setTimeout(() => {
+          for (let i = 0; i < this.onRejectList.length; i++) {
+            this.onRejectList[i](this.value);
           }
-        }
-        // 支持同步的 promise, 使用异步的方式调用
-        setTimeout(() => run(), 0);
+        });
       }
 
-      _reject(err) {
-        if (!this._status !== PENDING) return
-        const run = () => {
-          this._status = REJECTED;
-          this._value = err;
-          let cb;
-          while (cb = this._rejectedList.shift()) {
-            cb(err);
+      handler(fn, resolve, reject) {
+        setTimeout(() => {
+          try {
+            const res = fn(this.value);
+            if (res instanceof Test) {
+              res.then(resolve, reject);
+            } else {
+              resolve(res)
+            }
+          } catch (error) {
+            reject(error)
           }
-        }
-        setTimeout(() => run(), 0);
+        });
       }
+
+      then(onFulfilled, onRejected) {
+        if (typeof onFulfilled !== 'function') {
+          onFulfilled = v => v
+        }
+        if (typeof onrejectionhandled !== 'function') {
+          onrejectionhandled = e => e
+        }
+        if (this.status === 'fulfilled') {
+          return new Test((resolve, reject) => {
+            this.handler(onFulfilled, resolve, reject);
+          });
+        }
+        if (this.status === 'rejected') {
+          return new Test((resolve, reject) => {
+            this.handler(onFulfilled, resolve, reject);
+          });
+        }
+        if (this.status === 'pending') {
+          return new Test((resolve, reject) => {
+            this.onFulfilled.push(value => {
+              this.handler(onFulfilled, resolve, reject);
+            });
+            this.onRejectList.push(error => {
+              this.handler(onRejected, resolve, reject);
+            })
+          })
+        }
+      }
+      catch(onRejected) {
+        return this.then(null, onRejected);
+      }
+    }
+    Test.resolve = function(value) {
+      if (value instanceof Test) return;
+      return new Test((resolve, reject) => {
+        if (value && value.then && typeof value.then === 'function') {
+          setTimeout(() => {
+            value.then(resolve, reject);
+          });
+        } else {
+          resolve(value)
+        }
+      })
     }
   </script>
 </body>

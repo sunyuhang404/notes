@@ -67,7 +67,17 @@ const remove = (node, n) => {
     } else if (node.left) {
       // 找到左子节点中的最大值
       const maxLeft = findMax(node.left);
+      node.val = maxLeft.val;
+      node.left = remove(node.left, maxLeft.val);
+    } else {
+      const minRight = findMax(node.right);
+      node.val = minRight.val;
+      node.right = remove(node.right, minRight.val);
     }
+  } else if (node.val > n) {
+    node.left = remove(node.left, n)
+  } else {
+    node.right = remove(node.right, n);
   }
 }
 
@@ -86,3 +96,16 @@ const findMin = (node) => {
   }
   return node;
 }
+
+// 验证是否为搜索树
+const func = node => {
+  function dfs(node, minValue, maxValue) {
+    if (!node) return true
+    if (node.val <= minValue || node.val >= maxValue) return false;
+    return dfs(node.left, minValue, node.val) && dfs(node.right, node.val, maxValue);
+  }
+  return dfs(node, -Infinity, Infinity)
+}
+
+const res = func(node);
+console.log(res)
