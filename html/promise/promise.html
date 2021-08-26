@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <script>
+
+    const isFunction = variable => (typeof variable === 'function' || typeof variable === 'object')
+    const PENDING = 'PENDING';
+    const FULFILLED = 'FULFILLED';
+    const REJECTED = 'REJECTED';
+
+    class Test {
+      constructor(fn) {
+        this.status = 'pending';
+        this.value = undefined;
+        this.onResolveList = [];
+        this.onRejectList = [];
+        fn(this.resolve.bind(this), this.reject.bind(this));
+      }
+
+      resolve(value) {
+        if (this.status !== 'pending') return;
+        this.status = 'fulfilled';
+        this.value = value;
+        setTimeout(() => {
+          for (let i = 0; i < this.onResolveList.length; i++) {
+            this.onResolveList[i](this.value);
+          }
+        });
+      }
+
+      reject(error) {
+        if (this.status !== 'pending') return;
+        this.status = 'rejected';
+        this.value = value;
+        setTimeout(() => {
+          for (let i = 0; i < this.onRejectList.length; i++) {
+            this.onRejectList[i](this.value);
+          }
+        });
+      }
+
+      handler(fn, resolve, reject) {
+        setTimeout(() => {
+          try {
+            const res = fn(this.value);
+            if (res instanceof Test) {
+              res.then(resolve, reject);
+            } else {
+              resolve(res)
+            }
+          } catch (error) {
+            reject(error)
+          }
+        });
+      }
+
+      then(onFulfilled, onRejected) {
+        if (typeof onFulfilled !== 'function') {
+          onFulfilled = v => v
+        }
+        if (typeof onrejectionhandled !== 'function') {
+          onrejectionhandled = e => e
+        }
+        if (this.status === 'fulfilled') {
+          return new Test((resolve, reject) => {
+            this.handler(onFulfilled, resolve, reject);
+          });
+        }
+        if (this.status === 'rejected') {
+          return new Test((resolve, reject) => {
+            this.handler(onFulfilled, resolve, reject);
+          });
+        }
+        if (this.status === 'pending') {
+          return new Test((resolve, reject) => {
+            this.onFulfilled.push(value => {
+              this.handler(onFulfilled, resolve, reject);
+            });
+            this.onRejectList.push(error => {
+              this.handler(onRejected, resolve, reject);
+            })
+          })
+        }
+      }
+      catch(onRejected) {
+        return this.then(null, onRejected);
+      }
+    }
+    Test.resolve = function(value) {
+      if (value instanceof Test) return;
+      return new Test((resolve, reject) => {
+        if (value && value.then && typeof value.then === 'function') {
+          setTimeout(() => {
+            value.then(resolve, reject);
+          });
+        } else {
+          resolve(value)
+        }
+      })
+    }
+  </script>
+</body>
+</html>

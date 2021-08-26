@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <script>
+    const STATUS = {
+      PENDING: 'PENDING',
+      FULFILLED: 'FULFILLED',
+      REJECTED: 'REJECTED',
+    };
+    class Test {
+      constructor(callback) {
+        this.value = undefined;
+        this.status = STATUS.PENDING;
+        this.resolveList = [];
+        this.rejectList = [];
+        // 判断是否调用了
+        let called;
+
+        const resolve = (value) => {
+          if (called) return;
+          called = true;
+          setTimeout(() => {
+            this.value = value;
+            this.status = STATUS.FULFILLED;
+            // 调用回调
+            for (const fn of this.resolveList) {
+              fn(this.value);
+            }
+          });
+        };
+        const reject = (reason) => {
+          if (called) return;
+          called = true;
+          setTimeout(() => {
+            this.value = reason;
+            this.status = STATUS.REJECTED;
+            for (const fn of this.rejectList) {
+              fn(this.value);
+            }
+          });
+        };
+        try {
+          callback(resolve, reject);
+        } catch (error) {
+          reject();
+        }
+      }
+
+      then(onResolve, onReject) {
+        if (this.status === STATUS.PENDING) {
+          return new Test((resolve, reject) => {
+            const resolveArr = this.resolveList;
+            const rejectArr = this.rejectList;
+            resolveArr.push((innerValue) => {
+              try {
+                const value = onResolve(innerValue);
+                resolve(value);
+              } catch (error) {
+                reject(error);
+              }
+            });
+            rejectArr.push((innerValue) => {
+              try {
+                const value = onReject(innerValue);
+                resolve(value);
+              } catch (error) {
+                reject(error);
+              }
+            });
+          });
+        } else {
+          const innerValue = this.value;
+          const isFulfilled = this.status === STATUS.FULFILLED;
+          return new Test((resolve, reject) => {
+            try {
+              const value = isFulfilled ? onResolve(innerValue) : onReject(innerValue);  
+              resolve(value);
+            } catch (error) {
+              reject(error);
+            }
+          });
+        }
+      }
+    }
+
+    new Test(resolve => {
+      setTimeout(() => {
+        resolve(1);
+      }, 3000);
+    }).then(val1 => {
+      console.log('val1: ', val1);
+      return val1 * 2;
+    }).then(val2 => {
+      console.log('val2: ', val2);
+      return val2 * 2;
+    });
+
+  </script>
+</body>
+</html>

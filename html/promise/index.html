@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <script>
+    class Test {
+      callback = [];
+      state = 'pending';
+      value = null;
+      constructor(fn) {
+        fn(this._resolve.bind(this), this._reject.bind(this));
+      }
+      then(onFulfilled, onRejected) {
+        return new Test((resolve, reject) => {
+          this._handle({
+            resolve,
+            reject,
+            onFulfilled: onFulfilled || null,
+            onRejected: onRejected || null,
+          })
+        })
+      }
+      _handle(callback) {
+        if (this.state === 'pending') {
+          this.callback.push(callback);
+          return;
+        }
+        if (!callback.reject) {
+          callback.resolve(this.value);
+          return;
+        }
+        const res = callback.reject(this.value);
+        callback.resolve(res);
+      }
+      _resolve(value) {
+        if (value && (typeof value === 'object' || typeof value === 'function')) {
+          let then = value.then;
+          if (typeof then === 'function') {
+            then.call(value, this._resolve.bind(this), this._reject.bind(this));
+            return;
+          }
+        }
+        this.state = 'fulfilled';
+        this.value = value;
+        this.callback.forEach(callback => this._handle(callback));
+      }
+      _reject(error) {
+        this.state = 'rejected';
+        this.value = error;
+        this.callback.forEach(callback => this._handle(callback));
+      }
+    }
+    
+    const promiseAll = list => {
+      return new Promise((resolve, reject) => {
+        if (!Array.isArray) {
+          reject(new TypeError('参数是个数组'));
+        }
+        let count = 0;
+        const resList = new Array(list.length);
+        for (let i = 0; i < list.length; i++) {
+          Promise.resolve(list[i].then(res => {
+            count ++;
+            resList[i] = res;
+            if (count === list.length) {
+              resolve(resList);
+            }
+          }, err => reject(err)));
+        }
+      })
+    }
+    const promise1 = new Promise(resolve => {
+      setTimeout(() => {
+        resolve(1111111);
+      }, 2000);
+    })
+    const promise2 = new Promise(resolve => {
+      setTimeout(() => {
+        resolve(2222222);
+      }, 3000);
+    })
+    const arr = [promise1, promise2];
+    const start = Date.now();
+    promiseAll(arr).then(res => {
+      const duration = (Date.now() - start) / 1000
+      console.log(Math.round(duration))
+      console.log(res)
+    })
+  </script>
+</body>
+</html>

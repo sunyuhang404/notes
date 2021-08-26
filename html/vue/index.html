@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <div id="app">
+    {{ name }}
+  </div>
+  <script>
+    class Dep {
+      constructor() {
+        this.list = [];
+      }
+
+      add(watcher) {
+        this.list.push(watcher);
+      }
+
+      notify() {
+        this.list.forEach(watcher => watcher.update());
+      }
+    }
+    window.target = null;
+    class Watcher {
+      constructor(vm, key, cb) {
+        this.vm = vm;
+        this.key = key;
+        this.cb = cb;
+        this.value = this.get();
+      }
+      update() {
+        this.run();
+      }
+      run() {
+        const value = this.vm.data[this.key];
+        const oldValue = this.value;
+        if (value !== oldValue) {
+          this.value = value;
+          this.cb.call(this.vm, value, oldValue);
+        }
+      }
+
+      get() {
+        window.target = this;
+        const value = this.vm.data[this.key];
+        window.target = null;
+        return value;
+      }
+    }
+
+    function reactive(data, key, val) {
+      Observer(val);
+      const dep = new Dep();
+      Object.defineProperty(data, key, {
+        enumerable: true,
+        configurable: true,
+        get: function() {
+          if (window.target) {
+            dep.add(window.target);
+          }
+          return val;
+        },
+        set: function(newValue) {
+          if (val !== newValue) {
+            val = newValue;
+            dep.notify();
+          }
+        }
+      })
+    }
+
+    function Observer(data) {
+      if (!data || typeof data !== 'object') return;
+      Object.keys(data).forEach(key => reactive(data, key, data[key]));
+    }
+
+    function Vue(options) {
+      this.data = options.data;
+      Object.keys(this.data).forEach(key => {
+        this.proxy(key);
+      })
+      Observer(this.data);
+      const element = document.querySelector(options.el);
+      element.innerHTML = this.data.name;
+      options.mounted();
+      new Watcher(this, 'name', value => {
+        options.beforeUpdate();
+        element.innerHTML = value;
+        options.updated();
+      })
+    }
+
+    Vue.prototype = {
+      proxy: function(key) {
+        Object.defineProperty(this, key, {
+          get: function() {
+            return this.data[key];
+          },
+          set: function(val) {
+            this.data[key] = val;
+          }
+        })
+      }
+    }
+
+    const vue = new Vue({
+      el: '#app',
+      data: {
+        name: 'test1'
+      },
+      mounted() {
+        console.log('mounted');
+      },
+      beforeUpdate() {
+        console.log('beforeUpdate')
+      },
+      updated() {
+        console.log('updated')
+      }
+    })
+
+    setTimeout(() => {
+      vue.name = 'asdasdfadsa'
+    }, 1000);
+  </script>
+</body>
+</html>
